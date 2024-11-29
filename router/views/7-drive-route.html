@@ -1,0 +1,386 @@
+<!--차량별 운전 경로 확인-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>차량별 운전 경로 확인</title>
+    <link rel="stylesheet" href="css/7-drive-route.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="../js/abbapi.js"></script>
+    <!-- <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?autoload=false?appkey=3b6e8ec9308b61a30edd3ff31150fa19"></script> -->
+</head>
+<body style="visibility: hidden;">
+    <!--헤더-->
+    <header>
+        <a href="2-menubar.html">
+            <p>≡</p>
+        </a>
+        <a href="1-main_login.html">
+            <img src="img/logo.png" alt="아이커넥트" class="logo">
+        </a>
+        <!--로그인 구현 이후 style 지우기-->
+        <div style="visibility: hidden;"> 
+            <a href="10-1mypage.html">
+                <img src="img/프로필.png" alt="프로필" class="profile">
+            </a>
+            <a href="1-main.html">
+                <button class="logout">로그아웃</button>
+            </a>
+        </div>
+    </header>
+
+    <!--차량별 운전 경로 확인-->
+    <div class="drive-route">
+        <div class="title">
+            <p>차량별 운전 경로 확인</p>
+        </div>
+    </div>
+
+    <!--검색-->
+    <div class="serch">
+        <p>차량번호</p>
+        <div class="serch-container">
+            <input type="text" name="serch" id="serch" placeholder="11가 1234">
+            <div id="carNumberDropdown" class="dropdown-menu" style="display: none;"></div>
+            <button id="toggleListBtn" class="toggle-list-btn">
+                <img src="img/arrow-down-filled-triangle.png">
+            </button>
+        </div>
+        <button id="serchBtn" class="serch-btn">
+            <img src="img/serch.png" alt="검색" class="serch-img">
+        </button>
+    </div> 
+
+    <!--표-->
+    <div class="table-container">
+        <table id="tripTable">
+            <colgroup>
+                <col> <!-- 10% 너비 -->
+                <col> <!-- 40% 너비 -->
+                <col> <!-- 40% 너비 -->
+                <col> <!-- 10% 너비 -->
+            </colgroup>
+            <thead>
+                <tr>
+                    <th class="num">NO</th>
+                    <th class="start">출발지</th>
+                    <th class="stop">도착지</th>
+                    <th class="map">지도</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 지도 모달 -->
+    <div id="mapModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="mapContainer" style="width: 100%; height: 65vh;"></div>
+        </div>
+    </div>
+</body>
+</html>
+<script>
+    let currentDate = new Date();
+    let userId = null;
+    let searchQuery = localStorage.getItem('searchQuery') || ''; // 저장된 검색어
+
+    window.onload = async function() {
+        // 새로고침인지 확인
+        const isReload = performance.navigation.type === performance.navigation.TYPE_RELOAD;
+    
+        // 현재 페이지와 이전 페이지 확인
+        const currentPage = window.location.href;
+        const previousPage = document.referrer;
+    
+        // 새로고침이 아니거나 이전 페이지와 다를 경우 localStorage 초기화
+        if (!isReload && (!previousPage || previousPage !== currentPage)) {
+            localStorage.removeItem('searchQuery');
+            // console.log("localStorage 초기화: 새로고침이 아니거나 다른 페이지에서 이동한 경우");
+        } else {
+            // console.log("localStorage 유지: 새로고침이거나 동일한 페이지에서 이동한 경우");
+        }
+    
+        document.body.style.visibility = 'hidden'; // 초기 상태에서 body 숨김
+    
+        try {
+            await initializePage(); // 페이지 초기화
+            document.body.style.visibility = 'visible'; // 초기화 후 body 표시
+        } catch (error) {
+            console.error("페이지 초기화 중 오류 발생:", error);
+            document.body.style.visibility = 'visible'; // 오류 발생 시에도 body 표시
+        }
+    };
+    
+    async function initializePage() {
+        try {    
+            const savedSearchQuery = localStorage.getItem('searchQuery') || '';
+            if (savedSearchQuery) {
+                searchQuery = savedSearchQuery;
+                document.getElementById("serch").value = searchQuery;
+                await loadAndDisplayData(searchQuery);
+            } else {
+                const data = await loadAllCarNumber();
+                if (data && data.length > 0) {
+                    searchQuery = data[0].veh_number;
+                    localStorage.setItem('searchQuery', searchQuery);
+                    document.getElementById("serch").value = searchQuery;
+                    await loadAndDisplayData(searchQuery);
+                }
+            }
+    
+        } catch (error) {
+            console.error("초기화 중 오류:", error);
+        }
+    }
+
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 1을 더한다.
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // 검색
+    async function loadAndDisplayData(query) {
+        if (query) {
+            const response = await getUserIdbyCarNumber(query); // 차량 번호로 사용자 ID 조회
+            if (response && response.length > 0) {
+                userId = response[0].id;
+                const formattedDate = formatDate(currentDate);
+                await updateDriveRoute(userId, formattedDate); // 데이터 업데이트
+                document.body.style.visibility = 'visible'; // 데이터 로드 완료 후 body 표시
+            } else {
+                alert("해당 차량번호는 없습니다.");
+                document.body.style.visibility = 'visible'; // 데이터가 없어도 body 표시
+            }
+        } else {
+            alert("차량번호를 입력해주세요.");
+        }
+    }
+
+    // 차량 번호 검색 버튼 클릭 시 동작
+    document.getElementById("serchBtn").addEventListener("click", async function() {
+        const savedSearchQuery = document.getElementById("serch").value;
+        localStorage.setItem('searchQuery', savedSearchQuery); // 검색어 저장
+        await loadAndDisplayData(savedSearchQuery);
+    });
+
+    // 엔터 키로도 검색 가능하게 처리
+    document.getElementById("serch").addEventListener("keyup", async function(event) {
+        if (event.key === "Enter") {
+            const savedSearchQuery = document.getElementById("serch").value;
+            localStorage.setItem('searchQuery', savedSearchQuery); // 검색어 저장
+            await loadAndDisplayData(savedSearchQuery);
+        }
+    });
+
+    // 목록 토글
+    // 목록 토글 버튼에 클릭 이벤트 추가
+    document.getElementById("toggleListBtn").addEventListener("click", toggleDropdown);
+
+    // 차량번호 목록 토글 함수
+    async function toggleDropdown() {
+        const dropdown = document.getElementById("carNumberDropdown");
+
+        if (dropdown.style.display === "none") {
+            dropdown.style.display = "block";
+            await loadCarNumberList();
+        }
+        else {
+            dropdown.style.display = "none";
+        }
+    }
+
+    // 차량번호 목록 로드 함수
+    async function loadCarNumberList() {
+        const dropdown = document.getElementById("carNumberDropdown");
+        dropdown.innerHTML = ""; // 초기화
+
+        const carNumbers = await loadAllCarNumber();
+        carNumbers.forEach(carNumber => {
+            const carDiv = document.createElement("div");
+            carDiv.textContent = carNumber.veh_number;
+            carDiv.onclick = async () => {
+                localStorage.setItem('searchQuery', carNumber.veh_number);
+                document.getElementById("serch").value = carNumber.veh_number;
+                dropdown.style.display = "none";
+                await loadAndDisplayData(carNumber.veh_number);
+            };
+            dropdown.appendChild(carDiv);
+        });
+    }
+
+    // 주행 경로 업데이트
+    async function updateDriveRoute(userId, date){
+        const data = await loadDriveRecordDate(userId, "2024-11-21");
+        updateTable(data);
+    }
+
+    function formatDateToString(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 +1
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    // 표 업데이트
+    function updateTable(data) {
+        const tableBody = document.getElementById('tripTable').querySelector('tbody');
+        if (data.length > 0) {
+            tableBody.innerHTML = data.map(item => {
+                return `<tr>
+                            <td>${item.new_id}</td>
+                            <td>${item.start_location}</td>
+                            <td>${item.stop_location}<td/>
+                            <button class="map-btn">지도</button>
+                        </tr>`;
+            }).join('');
+
+            // 지도 버튼 이벤트 추가
+            document.querySelectorAll('.map-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const driveStart = formatDateToString(new Date(data[0].drive_start));
+                    const driveStop = formatDateToString(new Date(data[0].drive_stop));
+                    updateMap(data[0].member_id, driveStart, driveStop);
+                });
+            });
+        }
+        else {
+            tableBody.innerHTML = `<tr><td colspan="4" class="no-data">주행 기록이 없습니다.</td></tr>`
+        }
+    }
+
+    // Kakao Maps SDK를 동적으로 로드
+    function loadKakaoMaps() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=3b6e8ec9308b61a30edd3ff31150fa19";
+            script.defer = true;
+            script.onload = () => {
+                kakao.maps.load(() => {
+                    // console.log("Kakao Maps SDK Loaded");
+                    resolve();
+                });
+            };
+            script.onerror = () => {
+                // console.error("Kakao Maps SDK Failed to Load");
+                reject(new Error("Kakao Maps SDK Failed to Load"));
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    // 지도 팝업
+    // 지도 업데이트
+    async function updateMap(userId, start, stop) {
+        try {
+            await loadKakaoMaps(); // Kakao Maps SDK가 로드될 때까지 대기
+
+            modal.style.display = "block";
+
+            const mapContainer = document.getElementById("mapContainer");
+            const mapOptions = {
+                center: new kakao.maps.LatLng(35.858454, 128.523384), // LatLng 객체 생성
+                level: 3 // 줌 레벨
+            };
+
+            map = new kakao.maps.Map(mapContainer, mapOptions); // 지도 생성
+
+            const path = await loadPath(userId, start, stop);
+            // console.log(path);
+
+            // 경로 데이터 형식 변환 (LatLng 배열로)
+            const coordinates = path.map(point => new kakao.maps.LatLng(point.latitude, point.longitude));
+
+            // 경로 표시 함수 호출
+            drawPathOnMap(map, coordinates, null);
+        } catch (error) {
+            console.error("지도 로드 중 오류:", error);
+            alert("지도를 로드할 수 없습니다. 잠시 후 다시 시도해주세요.");
+        }
+    }
+
+    // 지도에 경로 표시
+    function drawPathOnMap(map, path, options) {
+        // 기본 Polyline 스타일 설정
+        const defaultOptions = {
+            strokeWeight: 3,      // 선의 두께
+            strokeColor: '#000', // 선의 색상
+            strokeOpacity: 0.8,    // 선의 투명도
+            strokeStyle: 'solid'   // 선의 스타일
+        };
+
+        // 사용자 정의 옵션 병합
+        const polylineOptions = { ...defaultOptions, ...options, path };
+
+        // Polyline 생성
+        const polyline = new kakao.maps.Polyline(polylineOptions);
+
+        // Polyline 지도에 표시
+        polyline.setMap(map);
+
+        // 지도 범위 설정
+        const bounds = new kakao.maps.LatLngBounds();
+        path.forEach(point => bounds.extend(point));
+        map.setBounds(bounds);
+
+        // 첫 번째 지점(출발지)와 마지막 지점(도착지) 설정
+        const startPoint = path[0]; // 출발지
+        const endPoint = path[path.length - 1]; // 도착지
+
+        // 출발지 마커 생성
+        const startMarker = new kakao.maps.Marker({
+            position: startPoint, // LatLng 객체
+            map: map,
+            title: "출발지",
+            image: new kakao.maps.MarkerImage(
+                "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png", // 출발지 마커 이미지
+                new kakao.maps.Size(64, 69), // 크기
+                { offset: new kakao.maps.Point(27, 69) } // 앵커 위치
+            )
+        });
+
+        // 도착지 마커 생성
+        const endMarker = new kakao.maps.Marker({
+            position: endPoint, // LatLng 객체
+            map: map,
+            title: "도착지",
+            image: new kakao.maps.MarkerImage(
+                "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_b.png", // 도착지 마커 이미지
+                new kakao.maps.Size(64, 69), // 크기
+                { offset: new kakao.maps.Point(27, 69) } // 앵커 위치
+            )
+        });
+
+        // 반환값: 생성된 Polyline 객체
+        return polyline;
+    }
+
+    const modal = document.getElementById("mapModal");
+    const closeModal = document.getElementsByClassName("close")[0];
+
+    // 닫기 버튼 클릭 시 모달 닫기
+    if (closeModal) {
+        closeModal.onclick = function () {
+            modal.style.display = "none";
+        };
+    } else {
+        console.error("닫기 버튼(.close)을 찾을 수 없습니다.");
+    }
+
+    // 모달 외부 클릭 시 닫기
+    window.onclick = function (event) {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    };
+</script>

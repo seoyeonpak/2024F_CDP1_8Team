@@ -1,0 +1,189 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #fdfdfd;
+    margin: 0;
+    padding: 0;
+}
+
+/*헤더*/
+header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin: -10px 0;
+    background-color: white;
+    box-shadow: 0 3px 1px #0000001a;
+}
+
+header p{
+    font-size: 42px;
+    color: #afafaf;
+    padding: 0;
+    margin: 0;
+    margin-top: -5px;
+    margin-bottom: -20px;
+    margin-left: 15px;
+    margin-right: 6.4em;
+}
+
+header a{
+    text-decoration: none;
+}
+
+.logo{
+    width: 50%;
+    margin-top: 10px;
+}
+
+.profile{
+    width: 35px;
+    margin-top: 13px;
+    margin-right: 10px;
+    margin-left: -50px;
+}
+
+.logout{
+    font-size: 17px;
+    border-radius: 20px;
+    border: 1px solid #79a2df;
+    color: #79a2df;
+    background-color: #ffffff;
+    float: right;
+    padding: 3px 15px;
+    margin-top: 15px;
+    margin-right: 15px;
+}
+
+.logout:hover{
+    background-color: #ebebeb;
+}
+
+/*메인*/
+.main{
+    background: linear-gradient(10deg, #a7cfe2, #dcedf7);
+    background-size: 100% 70vh;
+    border-top-left-radius: 70px;
+    border-bottom-right-radius: 70px;
+    width: 100%;
+    height: 70vh;
+}
+
+ul{
+    list-style: none;
+}
+
+.title{
+    margin-top: 13px;
+    padding-top: 17px;
+    padding-left: 22px;
+    padding-right: 3.5em;
+    font-size: 30px;
+    font-weight: 550;
+    display: flex;
+}
+
+hr{
+    width: 35%;
+    padding: 0;
+    margin-top: -30px;
+    margin-left: 5%;
+    border-style: double;
+    border-width: 1px;
+    color: #585858;
+}
+
+.line-car{
+    padding: 0;
+    margin-left: 47em;
+    margin-top: -37px;
+}
+
+.main-menu{
+    display: flex;
+    margin-top: -30px;
+}
+
+.main-menu a{
+    text-decoration: none;
+    color: #000;
+}
+
+.main-menu a:hover{
+    color: #4b83b8;
+}
+
+li{
+    font-size: 21px;
+    font-weight: 545;
+    padding-bottom: 15px;
+    margin-left: 66px;
+}
+
+.front{
+    padding: 0;
+    margin-top: -14%;
+    margin-left: 66%;
+    z-index: 3;
+    position: relative;
+}
+
+.mid{
+    padding: 0;
+    margin-top: -26%;
+    margin-bottom: 30%;
+    margin-left: 60%;
+    z-index: 2;
+    position: relative;
+}
+
+.back{
+    margin-top: -51%;
+    margin-left: 67%;
+    padding-bottom: 10%;
+    z-index: 1;
+    position: relative;
+}
+
+/*즐겨찾기*/
+.menu-title{
+    font-size: 23px;
+    font-weight: 550;
+    margin-left: 10%;
+    margin-bottom: 20px; /* 아이콘과 제목 사이 간격을 넓게 설정 */
+    z-index: 10; /* "자주 찾는 메뉴" 제목이 항상 위에 표시되도록 설정 */
+}
+
+.menu{
+    width: 85%;
+    margin-left: 7%;
+    display: flex; /* flexbox 사용 */
+    justify-content: center; /* 아이템을 가운데 정렬 */
+    text-align: center;
+    flex-wrap: wrap; /* 아이템이 5개 이상이면 자동으로 다음 줄로 넘어가게 함 */
+    gap: 50px; /* 아이템 간 간격을 균등하게 설정 */
+}
+
+.menu-item{
+    border-radius: 30px;
+    background-color: #d8ecf7;
+    width: calc(100% / 6 - 20px); /* 5개 기준 너비 설정, 아이템 간 간격 포함 */
+    margin-bottom: 20px; /* 아이템 간 간격 */
+    box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
+}
+
+.menu-item img{
+    width: 60px; /* 아이콘 크기 고정 */
+    margin-top: 25px;
+    margin-bottom: -10px;
+}
+
+.menu-item p{
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.menu-item a{
+    text-decoration: none;
+    color: #0f0f0f;
+}

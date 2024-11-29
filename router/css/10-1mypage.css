@@ -1,0 +1,113 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #fdfdfd;
+    margin: 0;
+    padding: 0;
+}
+
+/*헤더*/
+header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin: -10px 0;
+    background-color: white;
+    box-shadow: 0 3px 1px #0000001a;
+}
+
+header p{
+    font-size: 42px;
+    color: #afafaf;
+    padding: 0;
+    margin: 0;
+    margin-top: -5px;
+    margin-bottom: -20px;
+    margin-left: 15px;
+    margin-right: 6.4em;
+}
+
+header a{
+    text-decoration: none;
+}
+
+.logo{
+    width: 50%;
+    margin-top: 10px;
+}
+
+.profile{
+    width: 35px;
+    margin-top: 13px;
+    margin-right: 10px;
+    margin-left: -50px;
+}
+
+.logout{
+    font-size: 17px;
+    border-radius: 20px;
+    border: 1px solid #79a2df;
+    color: #79a2df;
+    background-color: #ffffff;
+    float: right;
+    padding: 3px 15px;
+    margin-top: 15px;
+    margin-right: 15px;
+}
+
+.logout:hover{
+    background-color: #ebebeb;
+}
+
+/*마이페이지*/
+.mypage{
+    margin-top: 45px;
+}
+
+.title{
+    font-size: 22px;
+    font-weight: 550;
+    margin-left: 120px;
+}
+
+/*정보*/
+.info{
+    margin-top: 180px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.text{
+    font-size: 20px;
+}
+
+.pw{
+    border-radius: 8px;
+    border: 1px solid #79a2df;
+    width: 21%;
+    padding: 12px 2px;
+    margin-top: 20px;
+    margin-bottom: 60px;
+    margin-left: 57em;
+    text-align: center;
+}
+
+input:focus {outline:none;}
+
+/*확인 버튼*/
+.ok-button {
+    width: 7%;
+    height: 42px;
+    background-color: #79a2df;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.ok-button:hover {
+    background-color: #466aa1;
+}

@@ -1,0 +1,511 @@
+<!--차량별 운전 스타일 확인-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>차량별 운전 스타일 확인</title>
+    <link rel="stylesheet" href="css/8-drive-style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../js/abbapi.js"></script>
+</head>
+<body style="visibility: hidden;">
+    <!--헤더-->
+    <header>
+        <a href="2-menubar.html">
+            <p>≡</p>
+        </a>
+        <a href="1-main_login.html">
+            <img src="img/logo.png" alt="아이커넥트" class="logo">
+        </a>
+        <!--로그인 구현 이후 style 지우기-->
+        <div style="visibility: hidden;"> 
+            <a href="10-1mypage.html">
+                <img src="img/프로필.png" alt="프로필" class="profile">
+            </a>
+            <a href="1-main.html">
+                <button class="logout">로그아웃</button>
+            </a>
+        </div>
+    </header>
+
+    <!--차량별 운전 스타일 확인-->
+    <div class="drive-style">
+        <div class="title">
+            <p>차량별 운전 스타일 확인</p>
+        </div>
+    </div>
+
+    <!--검색-->
+    <div class="serch">
+        <p>차량번호</p>
+        <div class="serch-container">
+            <input type="text" name="serch" id="serch" placeholder="11가 1234">
+            <div id="carNumberDropdown" class="dropdown-menu" style="display: none;"></div>
+            <button id="toggleListBtn" class="toggle-list-btn">
+                <img src="img/arrow-down-filled-triangle.png">
+            </button>
+        </div>
+        <button id="serchBtn" class="serch-btn">
+            <img src="img/serch.png" alt="검색" class="serch-img">
+        </button>
+    </div>  
+
+    <!--날짜-->
+    <div class="date-nav">
+        <button class="slide-button" id="prevDate">&lt;</button>
+        <span class="date-display" id="currentDate">&nbsp;</span>
+        <button class="slide-button" id="nextDate">&gt;</button>
+    </div>
+    
+    <div class="tab-menu">
+        <button class="tab-active" id="daylyTab">일간</button>
+        <button class="tab" id="monthlyTab">월간</button>
+    </div>
+
+    <!--결과창-->
+    <div class="result">
+        <!--점수-->
+        <div class="score">
+            <div class="chart-container">
+                <canvas id="dashboardChart" width="488" height="488"></canvas>
+            </div>            
+            <div class="drive-score-table-container">
+                <table id="driveScoreTable">
+                    <colgroup>
+                        <col>
+                        <col>
+                    </colgroup>
+                    <tbody>
+                        <tr>
+                            <td>점수 :</td>
+                            <td id="driveScore">-</td>
+                        </tr>
+                        <tr>
+                            <td>상태 :</td>
+                            <td id="driveState">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!--내용-->
+        <div class="drive-style-table-container">
+            <table id="driveStyleTable">
+                <tbody>
+                    <tr>
+                        <td>평균 주행속도</td>
+                        <td id="avgSpeed">-</td>
+                    </tr>
+                    <tr>
+                        <td>과속 횟수</td>
+                        <td id="speedUp">-</td>
+                    </tr>
+                    <tr>
+                        <td>급가속 횟수</td>
+                        <td id="speedAccel">-</td>
+                    </tr>
+                    <tr>
+                        <td>급감속 횟수</td>
+                        <td id="speedDown">-</td>
+                    </tr>
+                    <tr>
+                        <td>급차선 이동 횟수</td>
+                        <td id="changeLane">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+<script>
+    let currentDate = new Date();
+    let userId = null;
+    let dateRange = localStorage.getItem('dateRange') || 'dayly'; // 'dayly' or 'monthly', 저장된 값 없으면 기본 'dayly'
+    let searchQuery = localStorage.getItem('searchQuery') || ''; // 저장된 검색어
+
+    window.onload = async function() {
+        // 새로고침인지 확인
+        const isReload = performance.navigation.type === performance.navigation.TYPE_RELOAD;
+    
+        // 현재 페이지와 이전 페이지 확인
+        const currentPage = window.location.href;
+        const previousPage = document.referrer;
+    
+        // 새로고침이 아니거나 이전 페이지와 다를 경우 localStorage 초기화
+        if (!isReload && (!previousPage || previousPage !== currentPage)) {
+            localStorage.removeItem('dateRange');
+            localStorage.removeItem('searchQuery');
+            localStorage.removeItem('currentDate');
+            localStorage.removeItem('day');
+            // console.log("localStorage 초기화: 새로고침이 아니거나 다른 페이지에서 이동한 경우");
+        } else {
+            // console.log("localStorage 유지: 새로고침이거나 동일한 페이지에서 이동한 경우");
+        }
+    
+        document.body.style.visibility = 'hidden'; // 초기 상태에서 body 숨김
+    
+        try {
+            await initializePage(); // 페이지 초기화
+            document.body.style.visibility = 'visible'; // 초기화 후 body 표시
+        } catch (error) {
+            console.error("페이지 초기화 중 오류 발생:", error);
+            document.body.style.visibility = 'visible'; // 오류 발생 시에도 body 표시
+        }
+    };
+    
+    async function initializePage() {
+        try {
+            const savedDateRange = localStorage.getItem('dateRange') || 'dayly';
+            dateRange = savedDateRange; // 저장된 값이 없으면 기본값으로 설정
+            updateTabUI();
+    
+            const savedDate = localStorage.getItem('currentDate');
+            if (savedDate) {
+                currentDate = new Date(savedDate);
+            } else {
+                currentDate = new Date();
+            }
+    
+            const savedSearchQuery = localStorage.getItem('searchQuery') || '';
+            if (savedSearchQuery) {
+                searchQuery = savedSearchQuery;
+                document.getElementById("serch").value = searchQuery;
+                await loadAndDisplayData(searchQuery);
+            } else {
+                const data = await loadAllCarNumber();
+                if (data && data.length > 0) {
+                    searchQuery = data[0].veh_number;
+                    localStorage.setItem('searchQuery', searchQuery);
+                    document.getElementById("serch").value = searchQuery;
+                    await loadAndDisplayData(searchQuery);
+                }
+            }
+    
+            updateDateDisplay(); // 날짜 표시 업데이트
+        } catch (error) {
+            console.error("초기화 중 오류:", error);
+        }
+    }
+
+    // 날짜
+    // 날짜 업데이트
+    function updateDateDisplay() {
+        const formattedDate = dateRange === 'dayly' ? formatDate(currentDate) : formatMonth(currentDate);
+        document.getElementById('currentDate').innerHTML = formattedDate;
+        localStorage.setItem('currentDate', currentDate.toISOString());
+        if (userId) updateDriveStyle(userId, formattedDate);
+    }
+
+    function formatMonth(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 1을 더한다.
+        return `${year}-${month}`;
+    }
+
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 1을 더한다.
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function setMonth(date, offset) {
+        const year = date.getFullYear();
+        const thisMonth = date.getMonth(); // 0부터 시작
+        let day = localStorage.getItem('day');
+    
+        const nextMonth = thisMonth + offset;
+        const newYear = year + Math.floor(nextMonth / 12); // 연도 계산
+        const correctedNextMonth = (nextMonth + 12) % 12; // 음수 월을 방지
+    
+        // 현재 월의 마지막 날
+        const lastDayOfThisMonth = new Date(year, thisMonth + 1, 0).getDate();
+    
+        // 다음(이전) 월의 마지막 날
+        const lastDayOfNextMonth = new Date(newYear, correctedNextMonth + 1, 0).getDate();
+    
+        // 날짜 조정
+        if (day > lastDayOfNextMonth) {
+            day = lastDayOfNextMonth;
+        }
+    
+        // 새 날짜 생성
+        const newDate = new Date(newYear, correctedNextMonth, day);
+        return newDate;
+    }    
+
+    // 왼쪽 화살표 클릭 시 하루 또는 한 달 감소
+    document.getElementById('prevDate').addEventListener('click', function() {
+        if (dateRange === 'dayly') {
+            currentDate.setDate(currentDate.getDate() - 1);
+        } else {
+            currentDate = setMonth(currentDate, -1);
+        }
+        updateDateDisplay();
+    });
+
+    // 오른쪽 화살표 클릭 시 하루 또는 한 달 증가
+    document.getElementById('nextDate').addEventListener('click', function() {
+        if (dateRange === 'dayly') {
+            currentDate.setDate(currentDate.getDate() + 1);
+        } else {
+            currentDate = setMonth(currentDate, 1);
+        }
+        updateDateDisplay();
+    });
+
+    // 검색
+    async function loadAndDisplayData(query) {
+        if (query) {
+            const response = await getUserIdbyCarNumber(query); // 차량 번호로 사용자 ID 조회
+            if (response && response.length > 0) {
+                userId = response[0].id;
+                const formattedDate = dateRange === 'dayly' ? formatDate(currentDate) : formatMonth(currentDate);
+                await updateDriveStyle(userId, formattedDate); // 데이터 업데이트
+                document.body.style.visibility = 'visible'; // 데이터 로드 완료 후 body 표시
+            } else {
+                alert("해당 차량번호는 없습니다.");
+                document.body.style.visibility = 'visible'; // 데이터가 없어도 body 표시
+            }
+        } else {
+            alert("차량번호를 입력해주세요.");
+        }
+    }
+
+    // 차량 번호 검색 버튼 클릭 시 동작
+    document.getElementById("serchBtn").addEventListener("click", async function() {
+        const savedSearchQuery = document.getElementById("serch").value;
+        localStorage.setItem('searchQuery', savedSearchQuery); // 검색어 저장
+        await loadAndDisplayData(savedSearchQuery);
+    });
+
+    // 엔터 키로도 검색 가능하게 처리
+    document.getElementById("serch").addEventListener("keyup", async function(event) {
+        if (event.key === "Enter") {
+            const savedSearchQuery = document.getElementById("serch").value;
+            localStorage.setItem('searchQuery', savedSearchQuery); // 검색어 저장
+            await loadAndDisplayData(savedSearchQuery);
+        }
+    });
+
+    // 탭 전환
+    document.getElementById('daylyTab').addEventListener('click', () => {
+        dateRange = 'dayly';
+        localStorage.setItem('dateRange', dateRange);
+        updateTabUI();
+        updateDateDisplay();
+    });
+
+    document.getElementById('monthlyTab').addEventListener('click', () => {
+        localStorage.setItem('day', currentDate.getDate());
+        dateRange = 'monthly';
+        localStorage.setItem('dateRange', dateRange);
+        updateTabUI();
+        updateDateDisplay();
+    });
+
+    // 탭 UI 업데이트
+    function updateTabUI() {
+        document.getElementById('daylyTab').className = dateRange === 'dayly' ? 'tab-active' : 'tab';
+        document.getElementById('monthlyTab').className = dateRange === 'monthly' ? 'tab-active' : 'tab';
+    }
+
+    // 목록 토글
+    // 목록 토글 버튼에 클릭 이벤트 추가
+    document.getElementById("toggleListBtn").addEventListener("click", toggleDropdown);
+
+    // 차량번호 목록 토글 함수
+    async function toggleDropdown() {
+        const dropdown = document.getElementById("carNumberDropdown");
+
+        if (dropdown.style.display === "none") {
+            dropdown.style.display = "block";
+            await loadCarNumberList();
+        }
+        else {
+            dropdown.style.display = "none";
+        }
+    }
+
+    // 차량번호 목록 로드 함수
+    async function loadCarNumberList() {
+        const dropdown = document.getElementById("carNumberDropdown");
+        dropdown.innerHTML = ""; // 초기화
+
+        const carNumbers = await loadAllCarNumber();
+        carNumbers.forEach(carNumber => {
+            const carDiv = document.createElement("div");
+            carDiv.textContent = carNumber.veh_number;
+            carDiv.onclick = async () => {
+                localStorage.setItem('searchQuery', carNumber.veh_number);
+                document.getElementById("serch").value = carNumber.veh_number;
+                dropdown.style.display = "none";
+                await loadAndDisplayData(carNumber.veh_number);
+            };
+            dropdown.appendChild(carDiv);
+        });
+    }
+
+    // 운전 스타일 업데이트
+    async function updateDriveStyle(userId, date) {
+        const data = await (dateRange === 'dayly' ? loadDriveStyleDate(userId, date) : loadDriveStyleMonth(userId, date));
+        updateUI(data);
+    }
+
+    // UI 업데이트
+    function updateUI(data) {
+        if (data.length === 0) {
+            renderGaugeChart(null);
+            document.getElementById('driveScore').textContent = '-';
+            document.getElementById('driveState').textContent = '-';
+            document.getElementById('avgSpeed').textContent = '-';
+            document.getElementById('speedUp').textContent = '-';
+            document.getElementById('speedAccel').textContent = '-';
+            document.getElementById('speedDown').textContent = '-';
+            document.getElementById('changeLane').textContent = '-';
+            return;
+        }
+
+        let totalDriveScore = 0;  
+        let totalDriveSpeed = 0;
+        let totalSpeedUp = 0;
+        let totalSpeedAccel = 0;
+        let totalSpeedDown = 0;
+        let totalChangeLane = 0;
+    
+        data.forEach(item => {
+            totalDriveScore += item.score_drive;
+            totalDriveSpeed += item.drive_average;
+            totalSpeedUp += item.speed_up;
+            totalSpeedAccel += item.speed_accelerate;
+            totalSpeedDown += item.speed_decrease;
+            totalChangeLane += item.change_lane;
+        });
+    
+        const averageDriveScore = (totalDriveScore / data.length).toFixed(2);
+        const averageDriveSpeed = (totalDriveSpeed / data.length).toFixed(2);
+    
+        renderGaugeChart(averageDriveScore);
+        document.getElementById('driveScore').textContent = `${averageDriveScore}점`;
+        document.getElementById('avgSpeed').textContent = `${averageDriveSpeed} km/h`;
+        document.getElementById('speedUp').textContent = `${totalSpeedUp}회`;
+        document.getElementById('speedAccel').textContent = `${totalSpeedAccel}회`;
+        document.getElementById('speedDown').textContent = `${totalSpeedDown}회`;
+        document.getElementById('changeLane').textContent = `${totalChangeLane}회`;
+    }    
+
+    // 운전 등급 차트
+    let currentScore = null; // 현재 점수를 저장
+
+    function renderGaugeChart(score) {
+        const canvas = document.getElementById("dashboardChart");
+        const ctx = canvas.getContext("2d");
+
+        // 기존 차트가 존재하면 삭제
+        if (window.gaugeChart) {
+            window.gaugeChart.destroy();
+        }
+
+        // 점수를 저장하여 화면 크기 조정 시 재사용
+        currentScore = score;
+
+        // 게이지 차트 데이터 및 옵션 설정
+        const gaugeData = [33.33, 33.33, 33.33]; // 각 구간의 비율
+        const gaugeColors = ["#F44336", "#FFC107", "#4CAF50"]; // 빨강, 노랑, 초록 색상
+
+        // Chart.js로 차트 생성
+        window.gaugeChart = new Chart(ctx, {
+            type: "doughnut",
+            data: {
+                labels: ["위험", "보통", "양호"],
+                datasets: [
+                    {
+                        data: gaugeData,
+                        backgroundColor: gaugeColors,
+                        borderWidth: 3,
+                        borderColor: "#000",
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                rotation: -90, // 반원 시작
+                circumference: 180, // 반원 형태로 차트 생성
+                plugins: {
+                    legend: {
+                        display: false, // 범례 숨기기
+                    },
+                    tooltip: {
+                        enabled: false, // 툴팁 비활성화
+                    },
+                },
+                animation: {
+                    duration: 0,
+                    onComplete: () => {
+                        if (score !== null && score !== undefined) {
+                            // 점수가 있을 경우에만 화살표를 그린다.
+                            drawArrow(ctx, score);
+                        }
+                    },
+                },
+                interaction: {
+                    mode: 'none', // 사용자와의 상호작용 비활성화
+                },
+                hover: {
+                    mode: null, // 호버 동작 비활성화
+                },
+            },
+            plugins: [
+                {
+                    id: "drawArrowPlugin",
+                    afterDraw: (chart) => {
+                        if (score !== null && score !== undefined) {
+                            drawArrow(ctx, score);
+                        }
+                    },
+                },
+            ],
+        });
+    }
+
+    // 창 크기 조정 시 이벤트 리스너 추가
+    window.addEventListener("resize", () => {
+        initializePage();
+    });
+
+    // 화살표 그리기 함수
+    function drawArrow(ctx, score) {
+        const centerX = ctx.canvas.width / 4;
+        const centerY = ctx.canvas.width / 2.65;
+        const radius = ctx.canvas.width / 5;
+        let angle = 90;
+    
+        if (score >= 90) {
+            angle = 45; // 초록색 (오른쪽 끝)
+        } else if (score >= 80) {
+            angle = 0; // 노란색 (가운데)
+        } else {
+            angle = -45; // 빨간색 (왼쪽 끝)
+        }
+    
+        // console.log("centerX:", centerX, "centerY:", centerY, "radius:", radius, "angle:", angle);
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(-5, 0); // 화살표의 왼쪽 끝
+        ctx.lineTo(5, 0); // 화살표의 오른쪽 끝
+        ctx.lineTo(0, -radius); // 화살표의 끝
+        ctx.closePath();
+        ctx.fillStyle = "#000"; // 색상
+        ctx.fill();
+        ctx.restore();
+    }    
+</script>

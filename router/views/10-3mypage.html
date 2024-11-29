@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마이페이지</title>
+    <link rel="stylesheet" href="css/10-3mypage.css">
+</head>
+<body>
+    <!--팝업창-->
+    <div class="popup_title">
+        <p>비밀번호 변경</p>
+        <p><a href="10-2mypage.html">X</a></p>
+    </div>
+    <div class="popup">
+        <table class="popup-table">
+            <tr>
+                <td>현재 비밀번호</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>새로운 비밀번호</td>
+                <td class="pw-text">8~20자 이내</td>
+            </tr>
+            <tr>
+                <td>새로운 비밀번호 확인</td>
+                <td></td>
+            </tr>
+        </table>
+        <button class="modify" onclick="location.href='10-2mypage.html'">수정</button>
+    </div>
+
+    <div class="background">
+        <!--header-->
+        <header>
+            <a href="2-menubar.html">
+                <p>≡</p>
+            </a>
+            <a href="1-main_login.html">
+                <img src="img/logo.png" alt="아이커넥트" class="logo">
+            </a>
+            <div>
+                <a href="10-1mypage.html">
+                    <img src="img/프로필.png" alt="프로필" class="profile">
+                </a>
+                <a href="1-main.html">
+                    <button class="logout">로그아웃</button>
+                </a>
+            </div>
+        </header>
+
+        <!--마이페이지-->
+        <div class="mypage">
+            <div class="title">
+                <p>마이페이지</p>
+            </div>
+        </div>
+
+        <!--정보-->
+        <div class="info">
+            <p>계정 정보</p>
+            <table class="info-table">
+                <tr>
+                    <th>이름</th>
+                    <td>홍길동</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>아이디</th>
+                    <td>admin</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>비밀번호</th>
+                    <td>*******</td>
+                    <td><button class="change" onclick="location.href='10-3mypage.html'">변경</button></td>
+                </tr>
+                <tr>
+                    <th>연락처</th>
+                    <td>010-0000-0000</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>이메일</th>
+                    <td>admin@iconnect.kr</td>
+                </tr>
+            </table>
+
+            <p>차량 정보</p>
+            <table class="info-table">
+                <tr>
+                    <th>차량정보</th>
+                    <td>11가 1234</td>
+                </tr>
+                <tr>
+                    <th>제조사</th>
+                    <td>현대</td>
+                </tr>
+                <tr>
+                    <th>모델</th>
+                    <td>소나타 (SONATA)</td>
+                </tr>
+            </table> 
+            <button class="save" onclick="location.href='1-main_login.html'">저장</button>
+        </div>
+    </div>
+</body>
+</html>
