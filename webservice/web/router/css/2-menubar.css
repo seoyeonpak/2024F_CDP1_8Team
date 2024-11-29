@@ -1,0 +1,147 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #fdfdfd;
+    margin: 0;
+    padding: 0;
+}
+
+/*헤더*/
+header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin: -10px 0;
+    background-color: white;
+    box-shadow: 0 3px 1px #0000001a;
+}
+
+header p{
+    font-size: 42px;
+    color: #afafaf;
+    padding: 0;
+    margin: 0;
+    margin-top: -5px;
+    margin-bottom: -20px;
+    margin-left: 15px;
+    margin-right: 6.4em;
+}
+
+header a{
+    text-decoration: none;
+}
+
+.logo{
+    width: 50%;
+    margin-top: 10px;
+}
+
+.profile{
+    width: 35px;
+    margin-top: 13px;
+    margin-right: 10px;
+    margin-left: -50px;
+}
+
+.logout{
+    font-size: 17px;
+    border-radius: 20px;
+    border: 1px solid #79a2df;
+    color: #79a2df;
+    background-color: #ffffff;
+    float: right;
+    padding: 3px 15px;
+    margin-top: 15px;
+    margin-right: 15px;
+}
+
+.logout:hover{
+    background-color: #ebebeb;
+}
+
+/*차량 위치 확인*/
+.car_location{
+    margin-top: 20px;
+    padding: 0;
+    text-align: center;
+    z-index: 0;
+    position: relative;
+}
+
+.title{
+    display: flex;
+    justify-content: space-between;
+    font-size: 22px;
+    font-weight: 550;
+    margin-bottom: -40px;
+    margin: 0 100px;
+}
+
+.map{
+    width: 89%;
+    height: 46em;
+    margin-top: -25em;
+    z-index: 0;
+    position: relative;
+}
+
+/*메뉴바*/
+.menubar{
+    background-color: #ffffff;
+    float: left;
+    padding-bottom: 23.8em;
+    margin-top: 13.5px;
+    z-index: 3;
+    position: relative;
+}
+
+.bar-title{
+    font-size: 23px;
+    font-weight: 550;
+    color: #47a7e7;
+    margin-left: 25px;
+    margin-top: 35px;
+    margin-bottom: 15px;
+}
+
+table{
+    margin-left: 35px;
+}
+
+tr{
+    padding-bottom: -30px;
+}
+
+td{
+    padding-right: 30px;
+    font-size: 19px;
+}
+
+.table2 td{
+    padding-right: 41px;
+    font-size: 19x;
+}
+
+td a{
+    text-decoration: none;
+    color: #000000;
+}
+
+.bar-img{
+    width: 36px;
+}
+
+.star{
+    font-size: 20px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.star_selected{
+    font-size: 20px;
+    color: #ffd900;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
