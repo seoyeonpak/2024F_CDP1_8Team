@@ -17,16 +17,9 @@ data = pd.read_csv('OBD Data.csv')
 
 # 기존 클래스 레이블을 3개 클래스로 통합하는 매핑 정의
 class_mapping = {  
-    1: 1,  
-    2: 1,  
-    3: 1,  
-    4: 2,  
-    5: 2,  
-    6: 2,  
-    7: 2,  
-    8: 3,  
-    9: 3,
-    10: 3   
+    1: 1, 2: 1, 3: 1,  
+    4: 2, 5: 2, 6: 2, 7: 2,  
+    8: 3, 9: 3, 10: 3   
 }
 data['Reduced Driver Behavior rating'] = data['Driver Behavior rating'].map(class_mapping)
 
@@ -70,8 +63,11 @@ def augment_data(X, y, noise_level):
 # 데이터 증강 적용
 X_scaled, y_encoded = augment_data(X_scaled, y_encoded, 0.05)
 
-# 데이터를 훈련 세트와 테스트 세트로 나눔
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y_encoded, test_size=0.2, random_state=42)
+# 데이터를 훈련 세트, 검증 세트, 테스트 세트로 나눔
+# 8:1:1 비율로 나누기
+X_train, X_temp, y_train, y_temp = train_test_split(X_scaled, y_encoded, test_size=0.2) #8:2로 데이터 나누기
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5) #나누어진 2의 데이터를 1:1로 나누기
+
 
 # DNN 모델 생성
 model = Sequential()
@@ -88,7 +84,7 @@ model.compile(optimizer=Adamax(learning_rate=0.0005), loss='categorical_crossent
 
 # 모델 체크포인트 콜백
 checkpoint = ModelCheckpoint(
-    'best_model2.keras', 
+    'best_model.keras', 
     monitor='val_accuracy', 
     verbose=1, 
     save_best_only=True, 
@@ -106,16 +102,16 @@ early_stopping = EarlyStopping(
 # 모델 학습
 history = model.fit(
     X_train, y_train,
-    validation_data=(X_test, y_test),
+    validation_data=(X_val, y_val),
     epochs=1500,
     batch_size=64,
     callbacks=[checkpoint]
 )
 
 # 최적의 모델 불러오기
-best_model = tf.keras.models.load_model('best_model2.keras')
+best_model = tf.keras.models.load_model('best_model.keras')
 
-# 예측
+# 예측(test data를 이용하여 예측)
 y_pred_prob = best_model.predict(X_test)
 y_pred = np.argmax(y_pred_prob, axis=1)
 y_test_class = np.argmax(y_test, axis=1)
