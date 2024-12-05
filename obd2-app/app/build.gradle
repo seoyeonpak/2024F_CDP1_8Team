@@ -1,0 +1,55 @@
+apply plugin: 'com.android.application'
+
+
+android {
+    compileSdkVersion 31
+    buildToolsVersion '31.0.0'
+    defaultConfig {
+        applicationId "com.fry.dashboard.obd"
+        minSdkVersion 23
+        targetSdkVersion 31
+        versionCode 1
+        versionName "1.0.2"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            //minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = '11'
+        targetCompatibility = '11'
+    }
+    namespace 'com.dashboard.obd'
+    lint {
+        abortOnError false
+    }
+
+}
+
+dependencies {
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support.constraint:constraint-layout:2.0.4'
+
+    implementation "androidx.appcompat:appcompat:1.4.0"
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
+    implementation 'log4j:log4j:1.2.17'
+    implementation 'com.google.guava:guava:27.0.1-android'
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
+    implementation 'junit:junit:4.13.2'
+    implementation 'com.google.code.gson:gson:2.8.8'
+    testImplementation 'junit:junit:4.13.2'
+    implementation 'androidx.preference:preference:1.1.1'
+//gps 정보 불러오기 위해 추가
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
+
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
